@@ -10,6 +10,8 @@ namespace CollaborativeFiltering
     {
         static void Main(string[] args)
         {
+            var a = Parser.parseshit("_ignoretraining_set/");
+            var b = Parser.parseshit("_ignoreProbe/");
         }
     }
 }
