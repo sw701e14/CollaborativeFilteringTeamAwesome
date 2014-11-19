@@ -10,10 +10,10 @@ namespace CollaborativeFiltering
     public static class Parser
     {
 
-        public static Dictionary<int, List<Tuple<int, int>>> parseshit(string dirPath)
+        public static Dictionary<int, List<User>> parseshit(string dirPath)
         {
-            Dictionary<int, List<Tuple<int, int>>> matrix = new Dictionary<int, List<Tuple<int, int>>>();
-            List<Tuple<int, int>> userRatingsPerMovie = new List<Tuple<int, int>>();
+            Dictionary<int, List<User>> matrix = new Dictionary<int, List<User>>();
+            List<User> userRatingsPerMovie = new List<User>();
             int count = 0;
             foreach (var file in Directory.GetFiles(dirPath))
             {
@@ -29,7 +29,8 @@ namespace CollaborativeFiltering
                         movieId = line.Split(':')[0].ToInt();
                         if (userRatingsPerMovie.Count != 0)
                         {
-                            matrix.Add(movieId, new List<Tuple<int, int>>(userRatingsPerMovie));
+                            userRatingsPerMovie.Sort((u1, u2) => u1.UserId.CompareTo(u2.UserId));
+                            matrix.Add(movieId, new List<User>(userRatingsPerMovie));
                             userRatingsPerMovie.Clear();
                         }
                     }
@@ -37,20 +38,51 @@ namespace CollaborativeFiltering
                     {
                         string[] userInfo = line.Split(',');
                         int userId = userInfo[0].ToInt();
-                        if(userInfo.Count() > 1)
-                            userRatingsPerMovie.Add(Tuple.Create<int, int>(userId, userInfo[1].ToInt()));
+                        if (userInfo.Count() > 1)
+                            userRatingsPerMovie.Add(new User(userId, userInfo[1].ToInt()));
                         else
-                            userRatingsPerMovie.Add(Tuple.Create<int, int>(userId, 0));
+                            userRatingsPerMovie.Add(new User(userId, 0));
                     }
                 }
             }
             return matrix;
         }
 
+        public static IEnumerable<User> parseGetUsers(string filePath)
+        {
+            string[] lines = File.ReadAllLines(Path.Combine(filePath));
+            foreach (var line in lines)
+            {
+                if(!line.Contains(':'))
+                {
+                    string[] userInfo = line.Split(',');
+                    yield return new User( userInfo[0].ToInt(), userInfo[1].ToInt());
+                }
+            }
+        }
+
         public static void ExtractNewTrainingData(string probePath, string trainingPath)
         {
             string[] probe = File.ReadAllLines(probePath);
-            Dictionary<int, List<Tuple<int, int>>> probeMatrix = new Dictionary<int, List<Tuple<int, int>>>(parseshit("_ignoreProbe/"));
+            StreamWriter sw = new StreamWriter("output.txt");
+
+            Dictionary<int, List<User>> matrix = parseshit(probePath);
+            foreach (var movieId in matrix)
+            {
+                List<User> users = parseGetUsers(Path.Combine(trainingPath, "mv_" + movieId.Key.ToString().PadLeft(7, '0') + ".txt")).ToList();
+                users.Sort((u1, u2) => u1.UserId.CompareTo(u2.UserId));
+                sw.WriteLine(movieId + ":");
+                foreach (var probeUser in movieId.Value)
+                {
+                    foreach (var user in users)
+                    {
+                        if (probeUser.UserId == user.UserId)
+                        {
+                            sw.WriteLine(user.UserId + ", " + user.Rating);
+                        }
+                    }
+                }
+            }
         }
 
         public static int ToInt(this string str)
