@@ -10,6 +10,7 @@ namespace CollaborativeFiltering
     {
         static void Main(string[] args)
         {
+            Parser.ExtractNewTrainingData("_ignoreProbe/", "_ignoretraining_set/");
             var a = Parser.parseshit("_ignoretraining_set/");
             var b = Parser.parseshit("_ignoreProbe/");
         }

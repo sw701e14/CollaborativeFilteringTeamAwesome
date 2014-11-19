@@ -14,25 +14,21 @@ namespace CollaborativeFiltering
         {
             Dictionary<int, List<User>> matrix = new Dictionary<int, List<User>>();
             List<User> userRatingsPerMovie = new List<User>();
-            int count = 0;
             foreach (var file in Directory.GetFiles(dirPath))
             {
-                count++;
-                if (count > 2000)
-                    return matrix;
                 string[] lines = File.ReadAllLines(Path.Combine(file));
+                int movieId = -1;
                 foreach (var line in lines)
                 {
-                    int movieId = -1;
                     if (line.Contains(':'))
                     {
-                        movieId = line.Split(':')[0].ToInt();
                         if (userRatingsPerMovie.Count != 0)
                         {
                             userRatingsPerMovie.Sort((u1, u2) => u1.UserId.CompareTo(u2.UserId));
                             matrix.Add(movieId, new List<User>(userRatingsPerMovie));
                             userRatingsPerMovie.Clear();
                         }
+                        movieId = line.Split(':')[0].ToInt();
                     }
                     else
                     {
@@ -63,26 +59,41 @@ namespace CollaborativeFiltering
 
         public static void ExtractNewTrainingData(string probePath, string trainingPath)
         {
-            string[] probe = File.ReadAllLines(probePath);
+            string[] probe = File.ReadAllLines(probePath + "probe.txt");
             StreamWriter sw = new StreamWriter("output.txt");
 
             Dictionary<int, List<User>> matrix = parseshit(probePath);
+            int count = 0, temp = 0;
             foreach (var movieId in matrix)
             {
-                List<User> users = parseGetUsers(Path.Combine(trainingPath, "mv_" + movieId.Key.ToString().PadLeft(7, '0') + ".txt")).ToList();
+                count++;
+                if (count > temp + 250)
+                {
+                    temp = count;
+                    Console.WriteLine(count);
+                }
+                string filePath = Path.Combine(trainingPath, "mv_" + movieId.Key.ToString().PadLeft(7, '0') + ".txt");
+                List<User> users = parseGetUsers(filePath).ToList();
                 users.Sort((u1, u2) => u1.UserId.CompareTo(u2.UserId));
-                sw.WriteLine(movieId + ":");
+                sw.WriteLine(movieId.Key + ":");
                 foreach (var probeUser in movieId.Value)
                 {
-                    foreach (var user in users)
-                    {
-                        if (probeUser.UserId == user.UserId)
-                        {
-                            sw.WriteLine(user.UserId + ", " + user.Rating);
-                        }
-                    }
+                    User user = users[users.BinarySearch(probeUser, (u1,u2) => u1.UserId.CompareTo(u2.UserId))];
+                    sw.WriteLine(user.UserId + ", " + user.Rating);
+                    users.Remove(user);
                 }
+                saveUsers(users, filePath, movieId.Key.ToString()); 
             }
+            sw.Close();
+        }
+
+        private static void saveUsers(List<User> users, string filePath, string movieId)
+        {
+            StreamWriter sw = new StreamWriter(filePath+"test,txt");
+            sw.WriteLine(movieId + ":");
+            foreach (var user in users)
+                sw.WriteLine(user.UserId + ", " + user.Rating);
+            sw.Close();
         }
 
         public static int ToInt(this string str)
