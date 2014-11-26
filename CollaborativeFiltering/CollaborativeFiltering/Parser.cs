@@ -44,6 +44,26 @@ namespace CollaborativeFiltering
             return matrix;
         }
 
+        public static double[,] ToMatrix(Dictionary<int, List<User>> movies)
+        {
+            List<User> users = new List<User>();
+            foreach (var movie in movies)
+            {
+                foreach (var user in movie.Value)
+                {
+                    if (users.Where(u => u.UserId == user.UserId).Count() == 0)
+                        users.Add(user);
+                }
+            }
+
+            double[,] matrix = new double[movies.Keys.Count, users.Max(u =>u.UserId)];
+
+            for (int i = 0; i < movies.Keys.Count; i++)
+                for (int j = 0; j < movies[i].Count; j++)
+                    matrix[i, j] = movies[i][j].Rating;
+            return matrix;
+        }
+
         public static IEnumerable<User> parseGetUsers(string filePath)
         {
             string[] lines = File.ReadAllLines(Path.Combine(filePath));
