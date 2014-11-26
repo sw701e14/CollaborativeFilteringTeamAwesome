@@ -14,10 +14,12 @@ namespace CollaborativeFiltering
         {
             Dictionary<int, List<User>> matrix = new Dictionary<int, List<User>>();
             List<User> userRatingsPerMovie = new List<User>();
-            foreach (var file in Directory.GetFiles(dirPath))
+            int movieId = -1;
+            foreach (var file in Directory.GetFiles(dirPath).Take(13000))
             {
+                Console.WriteLine(movieId);
                 string[] lines = File.ReadAllLines(Path.Combine(file));
-                int movieId = -1;
+                
                 foreach (var line in lines)
                 {
                     if (line.Contains(':'))
@@ -49,6 +51,7 @@ namespace CollaborativeFiltering
             List<User> users = new List<User>();
             foreach (var movie in movies)
             {
+                Console.WriteLine("movie Id: " + movie.Key);
                 foreach (var user in movie.Value)
                 {
                     if (users.Where(u => u.UserId == user.UserId).Count() == 0)
@@ -59,8 +62,11 @@ namespace CollaborativeFiltering
             double[,] matrix = new double[movies.Keys.Count, users.Max(u =>u.UserId)];
 
             for (int i = 0; i < movies.Keys.Count; i++)
+            {
+                Console.WriteLine("movies ID: " + i);
                 for (int j = 0; j < movies[i].Count; j++)
                     matrix[i, j] = movies[i][j].Rating;
+            }
             return matrix;
         }
 
@@ -118,7 +124,7 @@ namespace CollaborativeFiltering
 
         public static int ToInt(this string str)
         {
-            return Convert.ToInt32(str, 10);
+            return Convert.ToInt32(str.Trim(), 10);
         }
 
     }

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace CollaborativeFiltering
 {
+    [Serializable]
     public class User
     {
         public User(int userId, int rating = 0)

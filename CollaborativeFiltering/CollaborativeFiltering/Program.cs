@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -10,9 +12,13 @@ namespace CollaborativeFiltering
     {
         static void Main(string[] args)
         {
-            Parser.ExtractNewTrainingData("_ignoreProbe/", "_ignoretraining_set/");
-            var a = Parser.parseshit("_ignoretraining_set/");
-            var b = Parser.parseshit("_ignoreProbe/");
+            var a = Parser.parseshit("_ignoreNewTraining/");
+
+            var stream = new FileStream("Dict.bin", FileMode.Create);
+            var formatter = new BinaryFormatter();
+            formatter.Serialize(stream, a);
+
+            var matrix = Parser.ToMatrix(a);
         }
     }
 }
